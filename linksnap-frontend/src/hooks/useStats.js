@@ -26,6 +26,17 @@ export function useStats() {
 function formatStats(data) {
   const changePrefix = data.weeklyChange >= 0 ? "+" : "";
   
+  // Extract domain from referrer URL for cleaner display
+  const formatSource = (source) => {
+    if (!source || source === "Direct") return "Direct";
+    try {
+      const url = new URL(source);
+      return url.hostname.replace("www.", "");
+    } catch {
+      return source.length > 20 ? source.substring(0, 20) + "..." : source;
+    }
+  };
+  
   return [
     { 
       title: "TOTAL CLICKS", 
@@ -43,7 +54,7 @@ function formatStats(data) {
     },
     { 
       title: "TOP SOURCE", 
-      value: data.topSource, 
+      value: formatSource(data.topSource), 
       subtitle: `${data.topSourcePercentage}% of traffic`, 
       subtitleColor: "text-cyan-400", 
       icon: "share" 
