@@ -7,6 +7,8 @@ function QRModal({ url, onClose }) {
   const fullUrl = `${SHORT_URL_BASE}/${url}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullUrl)}`;
 
+  console.log('QR Code URL:', fullUrl); // Debug log
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div 

@@ -1,33 +1,58 @@
-import { query } from "../db/database.js";
+import { Click } from "../db/database.js";
+import mongoose from "mongoose";
 
 export async function recordClick(linkId, referrer, userAgent) {
-  await query(
-    "INSERT INTO clicks (link_id, referrer, user_agent) VALUES ($1, $2, $3)",
-    [linkId, referrer, userAgent]
-  );
+  await Click.create({
+    link_id: linkId,
+    referrer,
+    user_agent: userAgent
+  });
 }
 
 export async function getClicksByLinkId(linkId, days = 30) {
-  const result = await query(
-    `SELECT DATE(clicked_at) as date, COUNT(*)::int as count 
-     FROM clicks 
-     WHERE link_id = $1 AND clicked_at >= NOW() - INTERVAL '1 day' * $2
-     GROUP BY DATE(clicked_at)
-     ORDER BY date`,
-    [linkId, days]
-  );
-  return result.rows;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  
+  const objectId = new mongoose.Types.ObjectId(linkId);
+  const clicks = await Click.aggregate([
+    { 
+      $match: { 
+        link_id: objectId, 
+        clicked_at: { $gte: startDate } 
+      } 
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$clicked_at" } },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } },
+    { $project: { date: "$_id", count: 1, _id: 0 } }
+  ]);
+  
+  return clicks;
 }
 
 export async function getTopReferrers(linkId, limit = 5) {
-  const result = await query(
-    `SELECT referrer, COUNT(*)::int as count 
-     FROM clicks 
-     WHERE link_id = $1 AND referrer IS NOT NULL
-     GROUP BY referrer
-     ORDER BY count DESC
-     LIMIT $2`,
-    [linkId, limit]
-  );
-  return result.rows;
+  const objectId = new mongoose.Types.ObjectId(linkId);
+  const referrers = await Click.aggregate([
+    { 
+      $match: { 
+        link_id: objectId, 
+        referrer: { $ne: null } 
+      } 
+    },
+    {
+      $group: {
+        _id: "$referrer",
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: limit },
+    { $project: { referrer: "$_id", count: 1, _id: 0 } }
+  ]);
+  
+  return referrers;
 }

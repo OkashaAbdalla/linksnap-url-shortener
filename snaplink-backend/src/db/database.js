@@ -1,80 +1,50 @@
-import pg from "pg";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const { Pool } = pg;
+// Define schemas
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password_hash: { type: String, required: true },
+  created_at: { type: Date, default: Date.now }
+});
 
-const poolConfig = process.env.DATABASE_URL 
-  ? {
-      connectionString: process.env.DATABASE_URL,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-      ssl: { rejectUnauthorized: false },
-    }
-  : {
-      host: process.env.PGHOST || 'localhost',
-      user: process.env.PGUSER || 'postgres',
-      password: process.env.PGPASSWORD,
-      database: process.env.PGDATABASE || 'snaplink',
-      port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
-    };
+const linkSchema = new mongoose.Schema({
+  slug: { type: String, required: true, unique: true },
+  original_url: { type: String, required: true },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  clicks: { type: Number, default: 0 },
+  created_at: { type: Date, default: Date.now },
+  expires_at: { type: Date, default: null }
+});
 
-const pool = new Pool(poolConfig);
+const clickSchema = new mongoose.Schema({
+  link_id: { type: mongoose.Schema.Types.ObjectId, ref: "Link", required: true },
+  clicked_at: { type: Date, default: Date.now },
+  referrer: { type: String, default: null },
+  user_agent: { type: String, default: null }
+});
+
+// Create indexes (only non-unique ones, unique indexes are auto-created)
+linkSchema.index({ user_id: 1 });
+linkSchema.index({ expires_at: 1 });
+clickSchema.index({ link_id: 1 });
+clickSchema.index({ clicked_at: 1 });
+
+// Create models
+export const User = mongoose.model("User", userSchema);
+export const Link = mongoose.model("Link", linkSchema);
+export const Click = mongoose.model("Click", clickSchema);
 
 export async function initDb() {
-  const client = await pool.connect();
   try {
-    await client.query(`
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-      CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS links (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        slug TEXT UNIQUE NOT NULL,
-        original_url TEXT NOT NULL,
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        clicks INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW(),
-        expires_at TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS clicks (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        link_id UUID REFERENCES links(id) ON DELETE CASCADE,
-        clicked_at TIMESTAMP DEFAULT NOW(),
-        referrer TEXT,
-        user_agent TEXT
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_links_slug ON links(slug);
-      CREATE INDEX IF NOT EXISTS idx_links_user_id ON links(user_id);
-      CREATE INDEX IF NOT EXISTS idx_links_expires_at ON links(expires_at);
-      CREATE INDEX IF NOT EXISTS idx_clicks_link_id ON clicks(link_id);
-      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    `);
-    console.log("Database initialized");
-  } finally {
-    client.release();
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("MongoDB connected");
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+    process.exit(1);
   }
 }
 
-export async function query(text, params) {
-  return pool.query(text, params);
-}
-
-export async function getClient() {
-  return pool.connect();
-}
-
-export default pool;
+export default mongoose;
