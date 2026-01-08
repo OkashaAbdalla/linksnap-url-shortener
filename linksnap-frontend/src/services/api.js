@@ -30,11 +30,11 @@ async function request(endpoint, options = {}, requiresAuth = true) {
     ...options,
   });
   
-  if (res.status === 401) {
-    removeToken();
-    window.location.reload();
-    throw new Error("Session expired");
-  }
+if (res.status === 401) {
+  removeToken();
+  throw new Error("Unauthorized");
+}
+
   
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
