@@ -27,10 +27,9 @@ router.get("/check/:linkId", authenticate, async (req, res, next) => {
       downloadable: mediaInfo.downloadable,
       platform: mediaInfo.platform,
       type: mediaInfo.type,
-      requiresExternal: mediaInfo.requiresExternal || false,
-      instructions: mediaInfo.requiresExternal 
-        ? mediaDownloadService.getDownloadInstructions(mediaInfo.platform)
-        : null
+      title: mediaInfo.title,
+      thumbnail: mediaInfo.thumbnail,
+      requiresProcessing: mediaInfo.requiresProcessing || false
     });
   } catch (error) {
     next(error);
@@ -52,33 +51,45 @@ router.get("/media/:linkId", authenticate, async (req, res, next) => {
       throw new NotFoundError("Link not found");
     }
     
+    // Get media info
     const mediaInfo = await mediaDownloadService.getMediaInfo(link.original_url);
     
     if (!mediaInfo.downloadable) {
       throw new ValidationError("This link does not contain downloadable media");
     }
     
-    // Only support direct media URLs for now
-    if (mediaInfo.platform !== "direct") {
+    // Check if requires processing (YouTube, Facebook)
+    if (mediaInfo.requiresProcessing) {
       return res.json({
         success: false,
-        requiresExternal: true,
+        requiresProcessing: true,
         platform: mediaInfo.platform,
-        instructions: mediaDownloadService.getDownloadInstructions(mediaInfo.platform),
+        message: `${mediaInfo.platform} downloads require additional processing. Please try again in a moment.`,
         originalUrl: link.original_url
       });
     }
     
-    // Download direct media
-    const download = await mediaDownloadService.downloadDirectMedia(link.original_url);
+    // Download the media
+    const download = await mediaDownloadService.downloadMedia(mediaInfo);
     
-    res.setHeader("Content-Type", download.contentType);
+    // Set headers for download
+    res.setHeader("Content-Type", download.contentType || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${download.filename}"`);
     if (download.contentLength) {
       res.setHeader("Content-Length", download.contentLength);
     }
     
+    // Pipe the stream to response
     download.stream.pipe(res);
+    
+    // Handle stream errors
+    download.stream.on('error', (error) => {
+      console.error("Stream error:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Download failed" });
+      }
+    });
+    
   } catch (error) {
     next(error);
   }

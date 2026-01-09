@@ -1,13 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE, api } from "../services/api";
-import DownloadModal from "./DownloadModal";
 
 function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [copied, setCopied] = useState(false);
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [checkingDownload, setCheckingDownload] = useState(false);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { darkMode } = useTheme();
 
   const shortUrl = `${SHORT_URL_BASE}/${link.slug}`;
@@ -36,26 +35,67 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   };
 
   const handleDownload = async () => {
-    if (!downloadInfo?.downloadable) return;
+    if (!downloadInfo?.downloadable || downloading) return;
     
-    if (downloadInfo.requiresExternal) {
-      // Show modal with instructions
-      setShowDownloadModal(true);
-      return;
-    }
+    setDownloading(true);
     
-    // Direct download
     try {
-      const downloadUrl = api.downloadMedia(link.id);
+      // Get the download URL with auth token
+      const token = localStorage.getItem("snaplink-token");
+      const downloadUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/download/media/${link.id}`;
+      
+      // Fetch the file
+      const response = await fetch(downloadUrl, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Download failed");
+      }
+      
+      // Check if it requires processing
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const data = await response.json();
+        if (data.requiresProcessing) {
+          alert(`${data.platform} downloads are being processed. This feature will be available soon.`);
+          return;
+        }
+      }
+      
+      // Get the blob
+      const blob = await response.blob();
+      
+      // Get filename from header or use default
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = "download";
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = "";
+      a.href = url;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Failed to download media. Please try again.");
+      alert(`Failed to download: ${error.message}`);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -65,58 +105,50 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   );
 
   return (
-    <>
-      <div className={`rounded-xl p-4 md:p-5 border transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] ${
-        darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200 shadow-sm'
-      }`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.iconBg}`}>
-              <span className={`material-symbols-outlined text-[20px] ${link.iconColor}`}>{link.icon}</span>
-            </div>
-            {link.has_password && (
-              <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
-                🔒 Protected
-              </span>
-            )}
-            {downloadInfo?.downloadable && (
-              <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                📥 {downloadInfo.platform === "direct" ? "Direct" : downloadInfo.platform}
-              </span>
-            )}
+    <div className={`rounded-xl p-4 md:p-5 border transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] ${
+      darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200 shadow-sm'
+    }`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.iconBg}`}>
+            <span className={`material-symbols-outlined text-[20px] ${link.iconColor}`}>{link.icon}</span>
           </div>
-          <DropdownMenu darkMode={darkMode} onDelete={() => onDelete(link.id)} onEdit={() => onEdit(link)} />
+          {link.has_password && (
+            <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
+              🔒 Protected
+            </span>
+          )}
+          {downloadInfo?.downloadable && (
+            <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-600'}`}>
+              📥 {downloadInfo.platform === "direct" ? "Direct" : downloadInfo.platform}
+            </span>
+          )}
         </div>
-
-        <div className="mb-4">
-          <a href={shortUrl} target="_blank" rel="noopener noreferrer" 
-             className={`font-medium hover:underline ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
-            {shortUrl.replace('http://', '').replace('https://', '')}
-          </a>
-          <p className={`text-sm truncate mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            {link.long}
-          </p>
-        </div>
-
-        <ActivityChart bars={activityBars} barColor={link.barColor} clicks={link.clicks} darkMode={darkMode} />
-        <ActionButtons 
-          copied={copied} 
-          onCopy={handleCopy} 
-          onShowQR={() => onShowQR(link.slug)} 
-          onDownload={handleDownload}
-          downloadable={downloadInfo?.downloadable}
-          checkingDownload={checkingDownload}
-          darkMode={darkMode} 
-        />
+        <DropdownMenu darkMode={darkMode} onDelete={() => onDelete(link.id)} onEdit={() => onEdit(link)} />
       </div>
-      
-      <DownloadModal 
-        isOpen={showDownloadModal}
-        onClose={() => setShowDownloadModal(false)}
-        downloadInfo={downloadInfo}
-        originalUrl={link.long}
+
+      <div className="mb-4">
+        <a href={shortUrl} target="_blank" rel="noopener noreferrer" 
+           className={`font-medium hover:underline ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
+          {shortUrl.replace('http://', '').replace('https://', '')}
+        </a>
+        <p className={`text-sm truncate mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          {link.long}
+        </p>
+      </div>
+
+      <ActivityChart bars={activityBars} barColor={link.barColor} clicks={link.clicks} darkMode={darkMode} />
+      <ActionButtons 
+        copied={copied} 
+        onCopy={handleCopy} 
+        onShowQR={() => onShowQR(link.slug)} 
+        onDownload={handleDownload}
+        downloadable={downloadInfo?.downloadable}
+        checkingDownload={checkingDownload}
+        downloading={downloading}
+        darkMode={darkMode} 
       />
-    </>
+    </div>
   );
 }
 
@@ -157,9 +189,10 @@ function ActivityChart({ bars, barColor, clicks, darkMode }) {
   );
 }
 
-function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, checkingDownload, darkMode }) {
+function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, checkingDownload, downloading, darkMode }) {
   const btnClass = darkMode ? 'bg-[#252f3f] hover:bg-[#2d3a4d] text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-500';
   const disabledClass = darkMode ? 'bg-[#1a2332] text-gray-600 cursor-not-allowed' : 'bg-gray-50 text-gray-300 cursor-not-allowed';
+  const downloadingClass = darkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600';
   
   return (
     <div className="flex items-center gap-2 pt-3">
@@ -174,14 +207,14 @@ function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, che
       </button>
       <button 
         onClick={onDownload} 
-        disabled={!downloadable || checkingDownload}
+        disabled={!downloadable || checkingDownload || downloading}
         className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-colors ${
-          downloadable && !checkingDownload ? btnClass : disabledClass
+          downloading ? downloadingClass : (downloadable && !checkingDownload ? btnClass : disabledClass)
         }`}
-        title={checkingDownload ? "Checking..." : downloadable ? "Download media" : "Not downloadable"}
+        title={checkingDownload ? "Checking..." : downloading ? "Downloading..." : downloadable ? "Download media" : "Not downloadable"}
       >
         <span className="material-symbols-outlined text-[16px]">
-          {checkingDownload ? "hourglass_empty" : "download"}
+          {checkingDownload || downloading ? "hourglass_empty" : "download"}
         </span>
       </button>
     </div>
