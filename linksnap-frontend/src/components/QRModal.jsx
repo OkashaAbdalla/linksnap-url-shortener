@@ -1,7 +1,7 @@
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE } from "../services/api";
 
-function QRModal({ url, qrStyle, onClose }) {
+function QRModal({ url, qrStyle, hasPassword, onClose }) {
   const { darkMode } = useTheme();
   
   const fullUrl = `${SHORT_URL_BASE}/${url}`;
@@ -19,7 +19,15 @@ function QRModal({ url, qrStyle, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>QR Code</h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>QR Code</h3>
+            {hasPassword && (
+              <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${darkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
+                <span className="material-symbols-outlined text-[14px]">lock</span>
+                Protected
+              </span>
+            )}
+          </div>
           <button 
             onClick={onClose}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
@@ -27,6 +35,13 @@ function QRModal({ url, qrStyle, onClose }) {
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
+        
+        {hasPassword && (
+          <div className={`mb-4 p-3 rounded-lg flex items-start gap-2 text-sm ${darkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-50 text-yellow-700'}`}>
+            <span className="material-symbols-outlined text-[18px]">info</span>
+            <p>This QR code leads to a password-protected link. Users will need to enter the password after scanning.</p>
+          </div>
+        )}
         
         <div className="flex flex-col items-center">
           <div className="bg-white p-4 rounded-xl mb-4">

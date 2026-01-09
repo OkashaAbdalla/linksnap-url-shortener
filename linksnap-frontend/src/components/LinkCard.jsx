@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE, api } from "../services/api";
+import PasswordPromptModal from "./PasswordPromptModal";
 
 function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [copied, setCopied] = useState(false);
@@ -8,6 +9,8 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [checkingDownload, setCheckingDownload] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   const { darkMode } = useTheme();
 
   const shortUrl = `${SHORT_URL_BASE}/${link.slug}`;
@@ -35,8 +38,15 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (password = null) => {
     if (!downloadInfo?.downloadable || downloading) return;
+    
+    // If link has password and no password provided, show prompt
+    if (downloadInfo.hasPassword && !password) {
+      setPendingAction('download');
+      setShowPasswordPrompt(true);
+      return;
+    }
     
     setDownloading(true);
     setDownloadSuccess(false);
@@ -44,7 +54,12 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
     try {
       // Get the download URL with auth token
       const token = localStorage.getItem("snaplink-token");
-      const downloadUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/download/media/${link.id}`;
+      let downloadUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3001/api"}/download/media/${link.id}`;
+      
+      // Add password if provided
+      if (password) {
+        downloadUrl += `?password=${encodeURIComponent(password)}`;
+      }
       
       // Fetch the file
       const response = await fetch(downloadUrl, {
@@ -55,6 +70,14 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
       
       if (!response.ok) {
         const error = await response.json().catch(() => ({ message: "Download failed" }));
+        
+        // If password required, show prompt
+        if (error.requiresPassword) {
+          setPendingAction('download');
+          setShowPasswordPrompt(true);
+          return;
+        }
+        
         throw new Error(error.message || "Download failed");
       }
       
@@ -121,6 +144,27 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
     }
   };
 
+  const handlePasswordSubmit = async (password) => {
+    if (pendingAction === 'download') {
+      await handleDownload(password);
+    } else if (pendingAction === 'qr') {
+      // For QR, we just pass the link with password verification flag
+      // The QR modal will handle showing the protected QR
+      onShowQR(link, password);
+    }
+    setShowPasswordPrompt(false);
+    setPendingAction(null);
+  };
+
+  const handleShowQR = () => {
+    if (link.has_password) {
+      setPendingAction('qr');
+      setShowPasswordPrompt(true);
+    } else {
+      onShowQR(link);
+    }
+  };
+
   const activityBars = useMemo(() => 
     Array.from({ length: 12 }, () => Math.random() * 100), 
     [link.id]
@@ -163,7 +207,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
       <ActionButtons 
         copied={copied} 
         onCopy={handleCopy} 
-        onShowQR={() => onShowQR(link.slug)} 
+        onShowQR={handleShowQR} 
         onDownload={handleDownload}
         downloadable={downloadInfo?.downloadable}
         checkingDownload={checkingDownload}
@@ -171,6 +215,18 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
         downloadSuccess={downloadSuccess}
         darkMode={darkMode} 
       />
+      
+      {showPasswordPrompt && (
+        <PasswordPromptModal
+          title={pendingAction === 'download' ? "Download Protected Content" : "View QR Code"}
+          message={`This ${pendingAction === 'download' ? 'download' : 'QR code'} is password protected. Please enter the password to continue.`}
+          onSubmit={handlePasswordSubmit}
+          onClose={() => {
+            setShowPasswordPrompt(false);
+            setPendingAction(null);
+          }}
+        />
+      )}
     </div>
   );
 }

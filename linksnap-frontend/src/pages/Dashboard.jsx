@@ -44,8 +44,10 @@ function Dashboard() {
     }
   };
 
-  const handleShowQR = (link) => {
-    setQrModalData({ slug: link.slug, qrStyle: link.qr_style });
+  const handleShowQR = (link, password = null) => {
+    // Owner can always see QR without password
+    // Password parameter is for future public QR viewing if needed
+    setQrModalData({ slug: link.slug, qrStyle: link.qr_style, hasPassword: link.has_password });
   };
 
   const handleEdit = (link) => {
@@ -84,6 +86,7 @@ function Dashboard() {
         <QRModal 
           url={qrModalData.slug} 
           qrStyle={qrModalData.qrStyle}
+          hasPassword={qrModalData.hasPassword}
           onClose={() => setQrModalData(null)} 
         />
       )}
