@@ -1,6 +1,11 @@
 import { Router } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import * as linkService from "../services/linkService.js";
 import * as clickService from "../services/clickService.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 
@@ -23,6 +28,12 @@ router.post("/:slug/verify", async (req, res, next) => {
     if (!linkService.verifyLinkPassword(password, link.password_hash)) {
       return res.status(401).json({ error: "Invalid password" });
     }
+    
+    // Record click
+    const referrer = req.get("Referer") || null;
+    const userAgent = req.get("User-Agent") || null;
+    await clickService.recordClick(link.id, referrer, userAgent);
+    await linkService.incrementClicks(link.id);
     
     res.json({ url: link.original_url, verified: true });
   } catch (error) {
@@ -53,12 +64,8 @@ router.get("/:slug", async (req, res, next) => {
     
     // Check if link is password protected
     if (link.password_hash) {
-      // Return a page indicating password is required
-      return res.status(403).json({ 
-        error: "Password required", 
-        requiresPassword: true,
-        slug: link.slug 
-      });
+      // Serve password prompt HTML page
+      return res.sendFile(path.join(__dirname, "../../public/password-prompt.html"));
     }
     
     // Record click
