@@ -1,6 +1,15 @@
 import axios from "axios";
-import pkg from "@tobyg74/tiktok-api-dl";
-const { Tiktok } = pkg;
+import TiktokAPI from "@tobyg74/tiktok-api-dl";
+
+// The library exports Downloader, not Tiktok
+const TiktokDownloader = TiktokAPI?.Downloader || TiktokAPI?.default?.Downloader || TiktokAPI;
+
+// Debug logging
+console.log("TikTok API loaded:", {
+  hasAPI: !!TiktokAPI,
+  hasDownloader: !!TiktokDownloader,
+  type: typeof TiktokDownloader
+});
 
 // Detect if URL is from a social media platform and contains media
 export function detectMediaPlatform(url) {
@@ -93,12 +102,12 @@ export async function getMediaInfo(url) {
 
 // TikTok media extraction
 async function getTikTokMediaInfo(url) {
-  if (!Tiktok) {
+  if (!TiktokDownloader) {
     throw new Error("TikTok downloader not available");
   }
   
   try {
-    const result = await Tiktok.Downloader(url, {
+    const result = await TiktokDownloader(url, {
       version: "v3"
     });
     
