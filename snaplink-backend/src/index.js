@@ -5,6 +5,7 @@ import linkRoutes from "./routes/linkRoutes.js";
 import redirectRoute from "./routes/redirectRoute.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import downloadRoutes from "./routes/downloadRoutes.js";
 import { initDb } from "./db/database.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { generalLimiter } from "./middleware/rateLimiter.js";
@@ -42,6 +43,7 @@ await initDb();
 app.use("/api/auth", authRoutes);
 app.use("/api/links", linkRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/download", downloadRoutes);
 app.use("/", redirectRoute);
 
 // Health check

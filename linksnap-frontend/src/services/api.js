@@ -77,4 +77,13 @@ export const api = {
   
   getLinkStats: (id, days = 30) => 
     request(`/stats/link/${id}?days=${days}`),
+  
+  // Download
+  checkDownloadable: (linkId) =>
+    request(`/download/check/${linkId}`),
+  
+  downloadMedia: (linkId) => {
+    const token = getToken();
+    return `${API_URL}/download/media/${linkId}?token=${token}`;
+  },
 };
