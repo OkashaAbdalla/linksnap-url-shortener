@@ -1,5 +1,6 @@
 import axios from "axios";
-import { Tiktok } from "@tobyg74/tiktok-api-dl";
+import pkg from "@tobyg74/tiktok-api-dl";
+const { Tiktok } = pkg;
 
 // Detect if URL is from a social media platform and contains media
 export function detectMediaPlatform(url) {
@@ -92,6 +93,10 @@ export async function getMediaInfo(url) {
 
 // TikTok media extraction
 async function getTikTokMediaInfo(url) {
+  if (!Tiktok) {
+    throw new Error("TikTok downloader not available");
+  }
+  
   try {
     const result = await Tiktok.Downloader(url, {
       version: "v3"
@@ -101,7 +106,7 @@ async function getTikTokMediaInfo(url) {
       const data = result.result;
       
       // Try to get video without watermark first, fallback to with watermark
-      const videoUrl = data.video?.[0] || data.video1 || data.video2;
+      const videoUrl = data.video?.[0] || data.video1 || data.video2 || data.play;
       
       if (videoUrl) {
         return {
@@ -109,15 +114,16 @@ async function getTikTokMediaInfo(url) {
           platform: "tiktok",
           type: "video",
           directUrl: videoUrl,
-          thumbnail: data.cover || data.dynamicCover,
+          thumbnail: data.cover || data.dynamicCover || data.origin_cover,
           title: data.title || data.desc || "TikTok Video",
-          author: data.author?.nickname || "Unknown"
+          author: data.author?.nickname || data.author?.unique_id || "Unknown"
         };
       }
     }
     
     throw new Error("Could not extract TikTok video URL");
   } catch (error) {
+    console.error("TikTok extraction error:", error);
     throw new Error(`TikTok download failed: ${error.message}`);
   }
 }
