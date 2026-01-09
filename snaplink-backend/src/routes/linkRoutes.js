@@ -14,7 +14,7 @@ router.use(authenticate);
 // Create short link
 router.post("/", createLinkLimiter, async (req, res, next) => {
   try {
-    const { url, customSlug, expiresAt } = req.body;
+    const { url, customSlug, expiresAt, password, qrStyle } = req.body;
     
     const sanitizedUrl = sanitizeUrl(url);
     if (!sanitizedUrl || !validateUrl(sanitizedUrl)) {
@@ -26,7 +26,7 @@ router.post("/", createLinkLimiter, async (req, res, next) => {
       throw new ConflictError("Slug already exists");
     }
     
-    const link = await linkService.createLink(sanitizedUrl, slug, expiresAt, req.user.id);
+    const link = await linkService.createLink(sanitizedUrl, slug, expiresAt, req.user.id, password, qrStyle);
     res.status(201).json(link);
   } catch (error) {
     next(error);
@@ -48,13 +48,20 @@ router.get("/", async (req, res, next) => {
 router.patch("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { slug, expiresAt } = req.body;
+    const { slug, expiresAt, originalUrl, password, qrStyle } = req.body;
     
     if (!await linkService.isLinkOwner(id, req.user.id)) {
       throw new NotFoundError("Link not found");
     }
     
-    const link = await linkService.updateLink(id, { slug: sanitizeSlug(slug), expiresAt }, req.user.id);
+    const updates = {};
+    if (slug !== undefined) updates.slug = sanitizeSlug(slug);
+    if (expiresAt !== undefined) updates.expiresAt = expiresAt;
+    if (originalUrl !== undefined) updates.originalUrl = sanitizeUrl(originalUrl);
+    if (password !== undefined) updates.password = password;
+    if (qrStyle !== undefined) updates.qrStyle = qrStyle;
+    
+    const link = await linkService.updateLink(id, updates, req.user.id);
     res.json(link);
   } catch (error) {
     next(error);

@@ -1,13 +1,16 @@
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE } from "../services/api";
 
-function QRModal({ url, onClose }) {
+function QRModal({ url, qrStyle, onClose }) {
   const { darkMode } = useTheme();
   
   const fullUrl = `${SHORT_URL_BASE}/${url}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullUrl)}`;
-
-  console.log('QR Code URL:', fullUrl); // Debug log
+  
+  // Use custom QR style if provided, otherwise use defaults
+  const fgColor = qrStyle?.fgColor?.replace('#', '') || '000000';
+  const bgColor = qrStyle?.bgColor?.replace('#', '') || 'FFFFFF';
+  
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}&color=${fgColor}&bgcolor=${bgColor}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -27,7 +30,7 @@ function QRModal({ url, onClose }) {
         
         <div className="flex flex-col items-center">
           <div className="bg-white p-4 rounded-xl mb-4">
-            <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
+            <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
           </div>
           <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             {fullUrl.replace('http://', '').replace('https://', '')}

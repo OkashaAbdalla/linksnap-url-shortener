@@ -4,6 +4,32 @@ import * as clickService from "../services/clickService.js";
 
 const router = Router();
 
+// Check password for protected link
+router.post("/:slug/verify", async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const { password } = req.body;
+    
+    const link = await linkService.getLinkBySlug(slug);
+    
+    if (!link) {
+      return res.status(404).json({ error: "Link not found" });
+    }
+    
+    if (!link.password_hash) {
+      return res.status(400).json({ error: "Link is not password protected" });
+    }
+    
+    if (!linkService.verifyLinkPassword(password, link.password_hash)) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+    
+    res.json({ url: link.original_url, verified: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Redirect short URL to original
 router.get("/:slug", async (req, res, next) => {
   try {
@@ -23,6 +49,16 @@ router.get("/:slug", async (req, res, next) => {
     // Check if link has expired
     if (link.expires_at && new Date(link.expires_at) < new Date()) {
       return res.status(410).json({ error: "Link has expired" });
+    }
+    
+    // Check if link is password protected
+    if (link.password_hash) {
+      // Return a page indicating password is required
+      return res.status(403).json({ 
+        error: "Password required", 
+        requiresPassword: true,
+        slug: link.slug 
+      });
     }
     
     // Record click

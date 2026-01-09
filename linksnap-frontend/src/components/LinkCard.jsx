@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE } from "../services/api";
 
-function LinkCard({ link, onCopy, onDelete, onShowQR }) {
+function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [copied, setCopied] = useState(false);
   const { darkMode } = useTheme();
 
@@ -24,10 +24,17 @@ function LinkCard({ link, onCopy, onDelete, onShowQR }) {
       darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200 shadow-sm'
     }`}>
       <div className="flex items-center justify-between mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.iconBg}`}>
-          <span className={`material-symbols-outlined text-[20px] ${link.iconColor}`}>{link.icon}</span>
+        <div className="flex items-center gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.iconBg}`}>
+            <span className={`material-symbols-outlined text-[20px] ${link.iconColor}`}>{link.icon}</span>
+          </div>
+          {link.has_password && (
+            <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
+              🔒 Protected
+            </span>
+          )}
         </div>
-        <DropdownMenu darkMode={darkMode} onDelete={() => onDelete(link.id)} />
+        <DropdownMenu darkMode={darkMode} onDelete={() => onDelete(link.id)} onEdit={() => onEdit(link)} />
       </div>
 
       <div className="mb-4">
@@ -46,7 +53,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR }) {
   );
 }
 
-function DropdownMenu({ darkMode, onDelete }) {
+function DropdownMenu({ darkMode, onDelete, onEdit }) {
   return (
     <div className="relative group">
       <button className={`transition-colors ${darkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -55,6 +62,12 @@ function DropdownMenu({ darkMode, onDelete }) {
       <div className={`absolute right-0 top-8 w-32 rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 ${
         darkMode ? 'bg-[#252f3f] border-gray-700' : 'bg-white border-gray-200'
       }`}>
+        <button onClick={onEdit} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+          darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+        }`}>
+          <span className="material-symbols-outlined text-[16px]">edit</span>
+          Edit
+        </button>
         <button onClick={onDelete} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 rounded-lg transition-colors ${
           darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
         }`}>

@@ -3,23 +3,25 @@ import URLForm from "../components/URLForm";
 import StatsSection from "../components/StatsSection";
 import LinksSection from "../components/LinksSection";
 import QRModal from "../components/QRModal";
+import EditLinkModal from "../components/EditLinkModal";
 import Toast from "../components/Toast";
 import { useTheme } from "../context/ThemeContext";
 import { useLinks } from "../hooks/useLinks";
 import { useToast } from "../hooks/useToast";
 import { useStats } from "../hooks/useStats";
-import { SHORT_URL_BASE } from "../services/api";
+import { SHORT_URL_BASE, api } from "../services/api";
 
 function Dashboard() {
-  const [qrModalUrl, setQrModalUrl] = useState(null);
+  const [qrModalData, setQrModalData] = useState(null);
+  const [editingLink, setEditingLink] = useState(null);
   const { darkMode } = useTheme();
-  const { links, isLoading, isInitialLoading, addLink, deleteLink } = useLinks();
+  const { links, isLoading, isInitialLoading, addLink, deleteLink, refreshLinks } = useLinks();
   const { toast, showToast, hideToast } = useToast();
   const { loadStats } = useStats();
 
-  const handleShorten = async (url, customSlug) => {
+  const handleShorten = async (url, customSlug, password, qrStyle) => {
     try {
-      await addLink(url, customSlug);
+      await addLink(url, customSlug, password, qrStyle);
       showToast("Link shortened successfully!", "success");
       loadStats();
     } catch (err) {
@@ -42,6 +44,26 @@ function Dashboard() {
     }
   };
 
+  const handleShowQR = (link) => {
+    setQrModalData({ slug: link.slug, qrStyle: link.qr_style });
+  };
+
+  const handleEdit = (link) => {
+    setEditingLink(link);
+  };
+
+  const handleSaveEdit = async (id, updates) => {
+    try {
+      await api.updateLink(id, updates);
+      await refreshLinks();
+      showToast("Link updated successfully!", "success");
+      loadStats();
+    } catch (err) {
+      showToast(err.message || "Failed to update link", "error");
+      throw err;
+    }
+  };
+
   return (
     <>
       <main className="max-w-6xl mx-auto px-4 md:px-8 pb-12">
@@ -53,11 +75,25 @@ function Dashboard() {
           isLoading={isInitialLoading}
           onCopy={handleCopy}
           onDelete={handleDelete}
-          onShowQR={setQrModalUrl}
+          onShowQR={handleShowQR}
+          onEdit={handleEdit}
         />
       </main>
 
-      {qrModalUrl && <QRModal url={qrModalUrl} onClose={() => setQrModalUrl(null)} />}
+      {qrModalData && (
+        <QRModal 
+          url={qrModalData.slug} 
+          qrStyle={qrModalData.qrStyle}
+          onClose={() => setQrModalData(null)} 
+        />
+      )}
+      {editingLink && (
+        <EditLinkModal
+          link={editingLink}
+          onClose={() => setEditingLink(null)}
+          onSave={handleSaveEdit}
+        />
+      )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
   );

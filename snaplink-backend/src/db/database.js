@@ -16,7 +16,13 @@ const linkSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   clicks: { type: Number, default: 0 },
   created_at: { type: Date, default: Date.now },
-  expires_at: { type: Date, default: null }
+  expires_at: { type: Date, default: null },
+  password_hash: { type: String, default: null },
+  qr_style: {
+    fgColor: { type: String, default: "#000000" },
+    bgColor: { type: String, default: "#FFFFFF" },
+    style: { type: String, default: "squares" } // squares, dots, rounded
+  }
 });
 
 const clickSchema = new mongoose.Schema({

@@ -22,11 +22,11 @@ export function useLinks() {
     }
   };
 
-  const addLink = async (url, customSlug) => {
+  const addLink = async (url, customSlug, password, qrStyle) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await api.createLink(url, customSlug);
+      const data = await api.createLink(url, customSlug, password, qrStyle);
       const newLink = formatLink(data);
       setLinks(prev => [newLink, ...prev]);
       return newLink;
@@ -61,7 +61,7 @@ export function useLinks() {
     }
   };
 
-  return { links, isLoading, isInitialLoading, error, addLink, deleteLink, updateLink, loadLinks };
+  return { links, isLoading, isInitialLoading, error, addLink, deleteLink, updateLink, refreshLinks: loadLinks };
 }
 
 function formatLink(data) {
@@ -72,6 +72,9 @@ function formatLink(data) {
     clicks: String(data.clicks || 0),
     createdAt: data.created_at,
     expiresAt: data.expires_at,
+    has_password: data.has_password,
+    qr_style: data.qr_style,
+    original_url: data.original_url,
     icon: "link",
     iconBg: "bg-cyan-500/20",
     iconColor: "text-cyan-400",

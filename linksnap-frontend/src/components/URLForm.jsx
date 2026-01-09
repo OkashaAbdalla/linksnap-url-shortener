@@ -5,6 +5,10 @@ import { SHORT_URL_BASE } from "../services/api";
 function URLForm({ onShorten, isLoading }) {
   const [url, setUrl] = useState("");
   const [customSlug, setCustomSlug] = useState("");
+  const [password, setPassword] = useState("");
+  const [qrFgColor, setQrFgColor] = useState("#000000");
+  const [qrBgColor, setQrBgColor] = useState("#FFFFFF");
+  const [qrStyle, setQrStyle] = useState("squares");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);
@@ -50,9 +54,17 @@ function URLForm({ onShorten, isLoading }) {
       return;
     }
     
-    onShorten(finalUrl, customSlug || null);
+    onShorten(finalUrl, customSlug || null, password || null, {
+      fgColor: qrFgColor,
+      bgColor: qrBgColor,
+      style: qrStyle
+    });
     setUrl("");
     setCustomSlug("");
+    setPassword("");
+    setQrFgColor("#000000");
+    setQrBgColor("#FFFFFF");
+    setQrStyle("squares");
   };
 
   return (
@@ -104,17 +116,111 @@ function URLForm({ onShorten, isLoading }) {
 
         {/* Custom slug input */}
         {showAdvanced && (
-          <div className={`mt-3 p-4 rounded-xl border ${darkMode ? 'bg-[#1a2332] border-gray-700' : 'bg-white border-gray-200'}`}>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{shortDomain}</span>
+          <div className={`mt-3 p-4 rounded-xl border space-y-4 ${darkMode ? 'bg-[#1a2332] border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div>
+              <label className={`block text-xs font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Custom Slug
+              </label>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{shortDomain}</span>
+                <input
+                  type="text"
+                  value={customSlug}
+                  onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                  placeholder="custom-slug"
+                  maxLength={20}
+                  className={`flex-1 bg-transparent outline-none text-sm ${darkMode ? 'text-white placeholder:text-gray-600' : 'text-gray-900 placeholder:text-gray-400'}`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={`block text-xs font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Password Protection (Optional)
+              </label>
               <input
-                type="text"
-                value={customSlug}
-                onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
-                placeholder="custom-slug"
-                maxLength={20}
-                className={`flex-1 bg-transparent outline-none text-sm ${darkMode ? 'text-white placeholder:text-gray-600' : 'text-gray-900 placeholder:text-gray-400'}`}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password to protect link"
+                className={`w-full px-3 py-2 rounded-lg border text-sm ${
+                  darkMode 
+                    ? 'bg-[#0c1222] border-gray-700 text-white placeholder:text-gray-600' 
+                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400'
+                } outline-none focus:border-cyan-500`}
               />
+            </div>
+
+            <div>
+              <label className={`block text-xs font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                QR Code Styling
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Foreground
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={qrFgColor}
+                      onChange={(e) => setQrFgColor(e.target.value)}
+                      className="w-10 h-8 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={qrFgColor}
+                      onChange={(e) => setQrFgColor(e.target.value)}
+                      className={`flex-1 px-2 py-1 rounded border text-xs ${
+                        darkMode 
+                          ? 'bg-[#0c1222] border-gray-700 text-white' 
+                          : 'bg-gray-50 border-gray-200 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Background
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={qrBgColor}
+                      onChange={(e) => setQrBgColor(e.target.value)}
+                      className="w-10 h-8 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={qrBgColor}
+                      onChange={(e) => setQrBgColor(e.target.value)}
+                      className={`flex-1 px-2 py-1 rounded border text-xs ${
+                        darkMode 
+                          ? 'bg-[#0c1222] border-gray-700 text-white' 
+                          : 'bg-gray-50 border-gray-200 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-2">
+                {['squares', 'dots', 'rounded'].map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => setQrStyle(style)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      qrStyle === style
+                        ? 'bg-cyan-500 text-white'
+                        : darkMode
+                        ? 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -56,14 +56,20 @@ export const api = {
     request("/auth/me"),
   
   // Links
-  createLink: (url, customSlug) => 
-    request("/links", { method: "POST", body: JSON.stringify({ url, customSlug }) }),
+  createLink: (url, customSlug, password, qrStyle) => 
+    request("/links", { method: "POST", body: JSON.stringify({ url, customSlug, password, qrStyle }) }),
+  
+  updateLink: (id, updates) => 
+    request(`/links/${id}`, { method: "PATCH", body: JSON.stringify(updates) }),
   
   getLinks: (limit = 50, offset = 0) => 
     request(`/links?limit=${limit}&offset=${offset}`),
   
   deleteLink: (id) => 
     request(`/links/${id}`, { method: "DELETE" }),
+  
+  verifyLinkPassword: (slug, password) =>
+    request(`/${slug}/verify`, { method: "POST", body: JSON.stringify({ password }) }, false),
   
   // Stats
   getStats: () => 

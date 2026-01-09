@@ -4,7 +4,7 @@ import EmptyState from "./EmptyState";
 import LinksSkeleton from "./LinksSkeleton";
 import SearchBar from "./SearchBar";
 
-function LinksSection({ links, darkMode, isLoading, onCopy, onDelete, onShowQR }) {
+function LinksSection({ links, darkMode, isLoading, onCopy, onDelete, onShowQR, onEdit }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
 
@@ -61,7 +61,8 @@ function LinksSection({ links, darkMode, isLoading, onCopy, onDelete, onShowQR }
               link={link} 
               onCopy={onCopy}
               onDelete={onDelete}
-              onShowQR={onShowQR}
+              onShowQR={() => onShowQR(link)}
+              onEdit={onEdit}
             />
           ))}
         </div>
