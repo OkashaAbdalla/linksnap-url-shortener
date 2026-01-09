@@ -70,10 +70,26 @@ router.get("/", async (req, res, next) => {
 router.patch("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { slug, expiresAt, originalUrl, password, qrStyle } = req.body;
+    const { slug, expiresAt, originalUrl, password, currentPassword, qrStyle } = req.body;
     
     if (!await linkService.isLinkOwner(id, req.user.id)) {
       throw new NotFoundError("Link not found");
+    }
+    
+    // Get the current link to check if it has a password
+    const currentLink = await linkService.getLinkById(id);
+    
+    // If link has password and user wants to change/remove it, verify current password
+    if (currentLink.has_password && (password !== undefined)) {
+      if (!currentPassword) {
+        throw new ValidationError("Current password is required to change or remove password protection");
+      }
+      
+      // Get link with password hash for verification
+      const linkWithHash = await linkService.getLinkBySlug(currentLink.slug);
+      if (!linkService.verifyLinkPassword(currentPassword, linkWithHash.password_hash)) {
+        throw new ValidationError("Current password is incorrect");
+      }
     }
     
     const updates = {};
