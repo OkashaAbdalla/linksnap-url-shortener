@@ -56,14 +56,22 @@ function EditLinkModal({ link, onClose, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={onClose}>
       <div 
-        className={`w-full max-w-2xl rounded-2xl border p-6 ${
+        className={`w-full max-w-2xl rounded-2xl border p-6 my-8 max-h-[90vh] overflow-y-auto ${
           darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 sticky top-0 z-10 pb-4" style={{ 
+          background: darkMode ? '#1a2332' : 'white',
+          marginTop: '-1.5rem',
+          marginLeft: '-1.5rem',
+          marginRight: '-1.5rem',
+          paddingLeft: '1.5rem',
+          paddingRight: '1.5rem',
+          paddingTop: '1.5rem'
+        }}>
           <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Edit Link
           </h2>
@@ -83,16 +91,16 @@ function EditLinkModal({ link, onClose, onSave }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Original URL
             </label>
             <input
               type="url"
               value={originalUrl}
               onChange={(e) => setOriginalUrl(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+              className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
                 darkMode 
                   ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
                   : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -102,14 +110,14 @@ function EditLinkModal({ link, onClose, onSave }) {
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Custom Slug
             </label>
             <input
               type="text"
               value={customSlug}
               onChange={(e) => setCustomSlug(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+              className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
                 darkMode 
                   ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
                   : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -119,18 +127,18 @@ function EditLinkModal({ link, onClose, onSave }) {
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Password Protection {link.has_password && "(Currently Protected)"}
             </label>
             
             {link.has_password && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter current password to make changes"
-                  className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
                     darkMode 
                       ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
                       : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -147,7 +155,7 @@ function EditLinkModal({ link, onClose, onSave }) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder={link.has_password ? "Enter new password (leave empty to keep current)" : "Enter password to protect link"}
-              className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+              className={`w-full px-4 py-2.5 rounded-xl border transition-colors ${
                 darkMode 
                   ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
                   : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
@@ -173,14 +181,14 @@ function EditLinkModal({ link, onClose, onSave }) {
             )}
           </div>
 
-          <div className="border-t pt-4 mt-4" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
-            <h3 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div className="border-t pt-3 mt-3" style={{ borderColor: darkMode ? '#374151' : '#e5e7eb' }}>
+            <h3 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               QR Code Styling
             </h3>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={`block text-sm mb-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Foreground Color
                 </label>
                 <div className="flex gap-2">
@@ -188,7 +196,7 @@ function EditLinkModal({ link, onClose, onSave }) {
                     type="color"
                     value={qrFgColor}
                     onChange={(e) => setQrFgColor(e.target.value)}
-                    className="w-12 h-10 rounded cursor-pointer"
+                    className="w-10 h-9 rounded cursor-pointer"
                   />
                   <input
                     type="text"
@@ -204,7 +212,7 @@ function EditLinkModal({ link, onClose, onSave }) {
               </div>
 
               <div>
-                <label className={`block text-sm mb-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Background Color
                 </label>
                 <div className="flex gap-2">
@@ -212,7 +220,7 @@ function EditLinkModal({ link, onClose, onSave }) {
                     type="color"
                     value={qrBgColor}
                     onChange={(e) => setQrBgColor(e.target.value)}
-                    className="w-12 h-10 rounded cursor-pointer"
+                    className="w-10 h-9 rounded cursor-pointer"
                   />
                   <input
                     type="text"
@@ -228,8 +236,8 @@ function EditLinkModal({ link, onClose, onSave }) {
               </div>
             </div>
 
-            <div className="mt-4">
-              <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className="mt-3">
+              <label className={`block text-xs mb-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 QR Code Style
               </label>
               <div className="flex gap-2">
@@ -238,7 +246,7 @@ function EditLinkModal({ link, onClose, onSave }) {
                     key={style}
                     type="button"
                     onClick={() => setQrStyle(style)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                       qrStyle === style
                         ? 'bg-cyan-500 text-white'
                         : darkMode
@@ -253,7 +261,16 @@ function EditLinkModal({ link, onClose, onSave }) {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 sticky bottom-0 z-10 pb-4" style={{ 
+            background: darkMode ? '#1a2332' : 'white',
+            marginBottom: '-1.5rem',
+            marginLeft: '-1.5rem',
+            marginRight: '-1.5rem',
+            paddingLeft: '1.5rem',
+            paddingRight: '1.5rem',
+            paddingBottom: '1.5rem',
+            borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
+          }}>
             <button
               type="button"
               onClick={onClose}
