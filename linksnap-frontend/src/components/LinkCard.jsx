@@ -52,7 +52,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
       });
       
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ message: "Download failed" }));
         throw new Error(error.message || "Download failed");
       }
       
@@ -69,27 +69,43 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
       // Get the blob
       const blob = await response.blob();
       
-      // Get filename from header or use default
+      // Get filename from header with better parsing
       const contentDisposition = response.headers.get("content-disposition");
-      let filename = "download";
+      let filename = `${downloadInfo.platform || "media"}_${Date.now()}.mp4`;
+      
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        // Try multiple patterns to extract filename
+        const patterns = [
+          /filename\*=UTF-8''([^;]+)/,
+          /filename="([^"]+)"/,
+          /filename=([^;]+)/
+        ];
+        
+        for (const pattern of patterns) {
+          const match = contentDisposition.match(pattern);
+          if (match && match[1]) {
+            filename = decodeURIComponent(match[1].trim());
+            break;
+          }
         }
       }
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
+      a.style.display = "none";
       a.href = url;
       a.download = filename;
+      
+      // Append to body, click, and remove
       document.body.appendChild(a);
       a.click();
       
       // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
       
     } catch (error) {
       console.error("Download failed:", error);
