@@ -45,8 +45,8 @@ function Dashboard() {
   };
 
   const handleShowQR = (link, password = null) => {
-    // Owner can always see QR without password
-    // Password parameter is for future public QR viewing if needed
+    // Even owner must enter password if link is protected
+    // This respects the user's security choice
     setQrModalData({ slug: link.slug, qrStyle: link.qr_style, hasPassword: link.has_password });
   };
 
