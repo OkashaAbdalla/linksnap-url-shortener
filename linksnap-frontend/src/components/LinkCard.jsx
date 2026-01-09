@@ -240,15 +240,27 @@ function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, che
       >
         {/* Animated background for downloading state */}
         {downloading && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" 
-               style={{ backgroundSize: '200% 100%' }} />
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent animate-shimmer" 
+                 style={{ backgroundSize: '200% 100%' }} />
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10" />
+          </>
         )}
         
-        {/* Icon with spin animation */}
-        <span className={`material-symbols-outlined text-[16px] relative z-10 ${
-          downloading ? 'animate-spin' : checkingDownload ? 'animate-pulse' : downloadSuccess ? 'animate-bounce' : ''
+        {/* Circular spinner ring for downloading */}
+        {downloading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+          </div>
+        )}
+        
+        {/* Icon with animations */}
+        <span className={`material-symbols-outlined relative z-10 transition-all duration-300 ${
+          downloading ? 'text-[20px] animate-spin-slow scale-110' : 'text-[16px]'
+        } ${
+          checkingDownload ? 'animate-pulse' : downloadSuccess ? 'animate-bounce' : ''
         }`}>
-          {downloadSuccess ? "check_circle" : downloading ? "sync" : checkingDownload ? "hourglass_empty" : "download"}
+          {downloadSuccess ? "check_circle" : downloading ? "downloading" : checkingDownload ? "hourglass_empty" : "download"}
         </span>
         
         {/* Optional text for larger screens */}
