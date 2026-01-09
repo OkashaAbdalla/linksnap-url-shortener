@@ -55,8 +55,8 @@ router.get("/media/:linkId", authenticate, async (req, res, next) => {
       throw new NotFoundError("Link not found");
     }
     
-    // If link has password and user is not owner, verify password
-    if (link.has_password && !isOwner) {
+    // If link has password, ALWAYS verify it (even for owner)
+    if (link.has_password) {
       if (!password) {
         return res.status(401).json({ 
           error: "Password required",
