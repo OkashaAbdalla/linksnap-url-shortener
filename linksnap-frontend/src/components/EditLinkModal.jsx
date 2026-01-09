@@ -5,7 +5,8 @@ function EditLinkModal({ link, onClose, onSave }) {
   const { darkMode } = useTheme();
   const [originalUrl, setOriginalUrl] = useState(link.original_url);
   const [customSlug, setCustomSlug] = useState(link.slug);
-  const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [removePassword, setRemovePassword] = useState(false);
   const [qrFgColor, setQrFgColor] = useState(link.qr_style?.fgColor || "#000000");
   const [qrBgColor, setQrBgColor] = useState(link.qr_style?.bgColor || "#FFFFFF");
@@ -16,6 +17,15 @@ function EditLinkModal({ link, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // If link has password and user wants to change/remove it, verify current password
+    if (link.has_password && (newPassword || removePassword)) {
+      if (!currentPassword) {
+        setError("Please enter your current password to make changes");
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -25,8 +35,13 @@ function EditLinkModal({ link, onClose, onSave }) {
         qrStyle: { fgColor: qrFgColor, bgColor: qrBgColor, style: qrStyle }
       };
 
-      if (password) {
-        updates.password = password;
+      // Include current password for verification if link is protected
+      if (link.has_password && (newPassword || removePassword)) {
+        updates.currentPassword = currentPassword;
+      }
+
+      if (newPassword) {
+        updates.password = newPassword;
       } else if (removePassword) {
         updates.password = null;
       }
@@ -107,11 +122,31 @@ function EditLinkModal({ link, onClose, onSave }) {
             <label className={`block text-sm font-medium mb-1.5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Password Protection {link.has_password && "(Currently Protected)"}
             </label>
+            
+            {link.has_password && (
+              <div className="mb-3">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password to make changes"
+                  className={`w-full px-4 py-3 rounded-xl border transition-colors ${
+                    darkMode 
+                      ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
+                      : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
+                  } outline-none focus:border-cyan-500`}
+                />
+                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Required to change or remove password
+                </p>
+              </div>
+            )}
+            
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={link.has_password ? "Enter new password to change" : "Leave empty for no password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder={link.has_password ? "Enter new password (leave empty to keep current)" : "Enter password to protect link"}
               className={`w-full px-4 py-3 rounded-xl border transition-colors ${
                 darkMode 
                   ? 'bg-[#0c1222] border-gray-700 text-white placeholder-gray-500' 
@@ -123,7 +158,12 @@ function EditLinkModal({ link, onClose, onSave }) {
                 <input
                   type="checkbox"
                   checked={removePassword}
-                  onChange={(e) => setRemovePassword(e.target.checked)}
+                  onChange={(e) => {
+                    setRemovePassword(e.target.checked);
+                    if (e.target.checked) {
+                      setNewPassword("");
+                    }
+                  }}
                   className="rounded"
                 />
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
