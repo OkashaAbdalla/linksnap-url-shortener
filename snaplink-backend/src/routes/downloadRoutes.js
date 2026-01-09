@@ -29,7 +29,8 @@ router.get("/check/:linkId", authenticate, async (req, res, next) => {
       type: mediaInfo.type,
       title: mediaInfo.title,
       thumbnail: mediaInfo.thumbnail,
-      requiresProcessing: mediaInfo.requiresProcessing || false
+      requiresProcessing: mediaInfo.requiresProcessing || false,
+      hasPassword: link.has_password
     });
   } catch (error) {
     next(error);
@@ -40,6 +41,7 @@ router.get("/check/:linkId", authenticate, async (req, res, next) => {
 router.get("/media/:linkId", authenticate, async (req, res, next) => {
   try {
     const { linkId } = req.params;
+    const { password } = req.query;
     
     const link = await linkService.getLinkById(linkId);
     if (!link) {
@@ -47,8 +49,28 @@ router.get("/media/:linkId", authenticate, async (req, res, next) => {
     }
     
     // Check if user owns the link
-    if (link.user_id?.toString() !== req.user.id.toString()) {
+    const isOwner = link.user_id?.toString() === req.user.id.toString();
+    
+    if (!isOwner) {
       throw new NotFoundError("Link not found");
+    }
+    
+    // If link has password and user is not owner, verify password
+    if (link.has_password && !isOwner) {
+      if (!password) {
+        return res.status(401).json({ 
+          error: "Password required",
+          requiresPassword: true 
+        });
+      }
+      
+      const linkWithHash = await linkService.getLinkBySlug(link.slug);
+      if (!linkService.verifyLinkPassword(password, linkWithHash.password_hash)) {
+        return res.status(401).json({ 
+          error: "Invalid password",
+          requiresPassword: true 
+        });
+      }
     }
     
     // Get media info
