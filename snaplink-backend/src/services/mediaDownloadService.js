@@ -121,8 +121,8 @@ async function getTikTokMediaInfo(url) {
     if (result.status === "success" && result.result) {
       const data = result.result;
       
-      // Try to get video without watermark first, fallback to with watermark
-      const videoUrl = data.video?.[0] || data.video1 || data.video2 || data.play;
+      // Try to get video - check the actual field names from the API
+      const videoUrl = data.videoHD || data.videoSD || data.videoWatermark || data.video?.[0] || data.video1 || data.video2 || data.play;
       
       console.log("Extracted video URL:", videoUrl);
       
