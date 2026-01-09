@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as linkService from "../services/linkService.js";
+import * as authService from "../services/authService.js";
 import { validateUrl } from "../utils/validators.js";
 import { sanitizeUrl, sanitizeSlug } from "../utils/sanitize.js";
 import { createLinkLimiter } from "../middleware/rateLimiter.js";
@@ -8,7 +9,28 @@ import { authenticate } from "../middleware/auth.js";
 
 const router = Router();
 
-// All routes require authentication
+// Get link owner email (public endpoint for contact feature)
+router.get("/owner/:slug", async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    
+    const link = await linkService.getLinkBySlug(slug);
+    if (!link || !link.user_id) {
+      throw new NotFoundError("Link not found");
+    }
+    
+    const user = await authService.getUserById(link.user_id);
+    if (!user) {
+      throw new NotFoundError("Owner not found");
+    }
+    
+    res.json({ email: user.email });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// All routes below require authentication
 router.use(authenticate);
 
 // Create short link
