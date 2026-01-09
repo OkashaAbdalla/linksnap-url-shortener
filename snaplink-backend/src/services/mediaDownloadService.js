@@ -102,20 +102,29 @@ export async function getMediaInfo(url) {
 
 // TikTok media extraction
 async function getTikTokMediaInfo(url) {
+  console.log("getTikTokMediaInfo called with URL:", url);
+  
   if (!TiktokDownloader) {
+    console.error("TikTok downloader not available!");
     throw new Error("TikTok downloader not available");
   }
+  
+  console.log("Calling TiktokDownloader...");
   
   try {
     const result = await TiktokDownloader(url, {
       version: "v3"
     });
     
+    console.log("TikTok API result:", JSON.stringify(result, null, 2));
+    
     if (result.status === "success" && result.result) {
       const data = result.result;
       
       // Try to get video without watermark first, fallback to with watermark
       const videoUrl = data.video?.[0] || data.video1 || data.video2 || data.play;
+      
+      console.log("Extracted video URL:", videoUrl);
       
       if (videoUrl) {
         return {
