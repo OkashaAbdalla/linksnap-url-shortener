@@ -7,6 +7,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [downloadInfo, setDownloadInfo] = useState(null);
   const [checkingDownload, setCheckingDownload] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
   const { darkMode } = useTheme();
 
   const shortUrl = `${SHORT_URL_BASE}/${link.slug}`;
@@ -38,6 +39,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
     if (!downloadInfo?.downloadable || downloading) return;
     
     setDownloading(true);
+    setDownloadSuccess(false);
     
     try {
       // Get the download URL with auth token
@@ -101,6 +103,10 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
       document.body.appendChild(a);
       a.click();
       
+      // Show success state
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 2000);
+      
       // Cleanup
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
@@ -162,6 +168,7 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
         downloadable={downloadInfo?.downloadable}
         checkingDownload={checkingDownload}
         downloading={downloading}
+        downloadSuccess={downloadSuccess}
         darkMode={darkMode} 
       />
     </div>
@@ -205,10 +212,12 @@ function ActivityChart({ bars, barColor, clicks, darkMode }) {
   );
 }
 
-function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, checkingDownload, downloading, darkMode }) {
+function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, checkingDownload, downloading, downloadSuccess, darkMode }) {
   const btnClass = darkMode ? 'bg-[#252f3f] hover:bg-[#2d3a4d] text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-500';
   const disabledClass = darkMode ? 'bg-[#1a2332] text-gray-600 cursor-not-allowed' : 'bg-gray-50 text-gray-300 cursor-not-allowed';
-  const downloadingClass = darkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600';
+  const downloadingClass = darkMode ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-600 border border-cyan-300';
+  const downloadableClass = darkMode ? 'bg-[#252f3f] hover:bg-gradient-to-r hover:from-cyan-500/10 hover:to-blue-500/10 text-cyan-400 hover:border-cyan-500/30 border border-transparent' : 'bg-gray-100 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 text-cyan-600 hover:border-cyan-200 border border-transparent';
+  const successClass = 'bg-green-500 text-white border border-green-400';
   
   return (
     <div className="flex items-center gap-2 pt-3">
@@ -224,14 +233,35 @@ function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, che
       <button 
         onClick={onDownload} 
         disabled={!downloadable || checkingDownload || downloading}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-colors ${
-          downloading ? downloadingClass : (downloadable && !checkingDownload ? btnClass : disabledClass)
+        className={`relative flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-all duration-300 overflow-hidden ${
+          downloadSuccess ? successClass : downloading ? downloadingClass : (downloadable && !checkingDownload ? downloadableClass : disabledClass)
         }`}
-        title={checkingDownload ? "Checking..." : downloading ? "Downloading..." : downloadable ? "Download media" : "Not downloadable"}
+        title={downloadSuccess ? "Downloaded!" : checkingDownload ? "Checking..." : downloading ? "Downloading..." : downloadable ? "Download media" : "Not downloadable"}
       >
-        <span className="material-symbols-outlined text-[16px]">
-          {checkingDownload || downloading ? "hourglass_empty" : "download"}
+        {/* Animated background for downloading state */}
+        {downloading && (
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" 
+               style={{ backgroundSize: '200% 100%' }} />
+        )}
+        
+        {/* Icon with spin animation */}
+        <span className={`material-symbols-outlined text-[16px] relative z-10 ${
+          downloading ? 'animate-spin' : checkingDownload ? 'animate-pulse' : downloadSuccess ? 'animate-bounce' : ''
+        }`}>
+          {downloadSuccess ? "check_circle" : downloading ? "sync" : checkingDownload ? "hourglass_empty" : "download"}
         </span>
+        
+        {/* Optional text for larger screens */}
+        {downloading && (
+          <span className="hidden sm:inline text-xs font-medium relative z-10 animate-pulse">
+            Downloading...
+          </span>
+        )}
+        {downloadSuccess && (
+          <span className="hidden sm:inline text-xs font-medium relative z-10">
+            Done!
+          </span>
+        )}
       </button>
     </div>
   );
