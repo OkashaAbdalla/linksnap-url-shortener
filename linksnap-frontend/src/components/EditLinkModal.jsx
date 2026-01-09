@@ -58,20 +58,15 @@ function EditLinkModal({ link, onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={onClose}>
       <div 
-        className={`w-full max-w-2xl rounded-2xl border p-6 my-8 max-h-[90vh] overflow-y-auto ${
+        className={`w-full max-w-2xl rounded-2xl border my-8 max-h-[90vh] flex flex-col ${
           darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6 sticky top-0 z-10 pb-4" style={{ 
-          background: darkMode ? '#1a2332' : 'white',
-          marginTop: '-1.5rem',
-          marginLeft: '-1.5rem',
-          marginRight: '-1.5rem',
-          paddingLeft: '1.5rem',
-          paddingRight: '1.5rem',
-          paddingTop: '1.5rem'
-        }}>
+        {/* Sticky Header */}
+        <div className={`flex items-center justify-between p-6 border-b sticky top-0 z-20 rounded-t-2xl ${
+          darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200'
+        }`} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Edit Link
           </h2>
@@ -85,11 +80,13 @@ function EditLinkModal({ link, onClose, onSave }) {
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
+        {/* Scrollable Content */}
+        <div className="overflow-y-auto flex-1 px-6 py-4">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
@@ -246,7 +243,7 @@ function EditLinkModal({ link, onClose, onSave }) {
                     key={style}
                     type="button"
                     onClick={() => setQrStyle(style)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       qrStyle === style
                         ? 'bg-cyan-500 text-white'
                         : darkMode
@@ -260,37 +257,33 @@ function EditLinkModal({ link, onClose, onSave }) {
               </div>
             </div>
           </div>
-
-          <div className="flex gap-3 pt-4 sticky bottom-0 z-10 pb-4" style={{ 
-            background: darkMode ? '#1a2332' : 'white',
-            marginBottom: '-1.5rem',
-            marginLeft: '-1.5rem',
-            marginRight: '-1.5rem',
-            paddingLeft: '1.5rem',
-            paddingRight: '1.5rem',
-            paddingBottom: '1.5rem',
-            borderTop: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`
-          }}>
-            <button
-              type="button"
-              onClick={onClose}
-              className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
-                darkMode 
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
         </form>
+        </div>
+
+        {/* Sticky Footer */}
+        <div className={`flex gap-3 p-6 border-t sticky bottom-0 z-20 rounded-b-2xl ${
+          darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200'
+        }`} style={{ boxShadow: '0 -2px 8px rgba(0,0,0,0.1)' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
+              darkMode 
+                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            onClick={handleSubmit}
+            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {isLoading ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
       </div>
     </div>
   );
