@@ -12,13 +12,37 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [activityData, setActivityData] = useState([]);
   const { darkMode } = useTheme();
 
   const shortUrl = `${SHORT_URL_BASE}/${link.slug}`;
 
   useEffect(() => {
     checkIfDownloadable();
+    loadActivityData();
   }, [link.id]);
+
+  const loadActivityData = async () => {
+    try {
+      const stats = await api.getLinkStats(link.id, 12); // Last 12 days
+      if (stats.clicks && Array.isArray(stats.clicks)) {
+        // Map to simple values for mini chart
+        const values = stats.clicks.map(c => c.count);
+        // Pad with zeros if less than 12 days
+        while (values.length < 12) {
+          values.unshift(0);
+        }
+        setActivityData(values.slice(-12).map(value => ({ value })));
+      } else {
+        // No data yet, show zeros
+        setActivityData(Array.from({ length: 12 }, () => ({ value: 0 })));
+      }
+    } catch (error) {
+      console.error('Failed to load activity data:', error);
+      // Show zeros on error
+      setActivityData(Array.from({ length: 12 }, () => ({ value: 0 })));
+    }
+  };
 
   const checkIfDownloadable = async () => {
     try {
@@ -166,11 +190,6 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
     }
   };
 
-  const activityBars = useMemo(() => 
-    Array.from({ length: 12 }, () => Math.random() * 100), 
-    [link.id]
-  );
-
   return (
     <div className={`rounded-xl p-4 md:p-5 border transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] ${
       darkMode ? 'bg-[#1a2332] border-gray-800' : 'bg-white border-gray-200 shadow-sm'
@@ -204,9 +223,9 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
         </p>
       </div>
 
-      <div className="pointer-events-none">
+      <div className="h-8 mb-3">
         <MiniActivityChart 
-          data={activityBars.map(value => ({ value }))} 
+          data={activityData} 
           color={getColorFromBarColor(link.barColor)} 
           clicks={link.clicks} 
           darkMode={darkMode} 

@@ -55,7 +55,7 @@ function ClickTrendsChart({ data = [] }) {
   );
 }
 
-// Generate sample data for last 30 days
+// Generate empty data for last 30 days (will be filled with real data)
 function generateSampleData() {
   const data = [];
   const today = new Date();
@@ -66,7 +66,7 @@ function generateSampleData() {
     
     data.push({
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      clicks: Math.floor(Math.random() * 50) + 10
+      clicks: 0 // Start with 0, will show real data when available
     });
   }
   
