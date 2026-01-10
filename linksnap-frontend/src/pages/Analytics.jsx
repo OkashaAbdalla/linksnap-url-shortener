@@ -38,8 +38,8 @@ function Analytics() {
       
       // Aggregate clicks by date
       allLinkStats.forEach(stats => {
-        if (stats.clicks && Array.isArray(stats.clicks)) {
-          stats.clicks.forEach(({ date, count }) => {
+        if (stats.clickHistory && Array.isArray(stats.clickHistory)) {
+          stats.clickHistory.forEach(({ date, count }) => {
             const existing = allClicksMap.get(date) || 0;
             allClicksMap.set(date, existing + count);
           });

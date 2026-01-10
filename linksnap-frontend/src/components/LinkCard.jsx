@@ -25,9 +25,9 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const loadActivityData = async () => {
     try {
       const stats = await api.getLinkStats(link.id, 12); // Last 12 days
-      if (stats.clicks && Array.isArray(stats.clicks)) {
+      if (stats.clickHistory && Array.isArray(stats.clickHistory)) {
         // Map to simple values for mini chart
-        const values = stats.clicks.map(c => c.count);
+        const values = stats.clickHistory.map(c => c.count);
         // Pad with zeros if less than 12 days
         while (values.length < 12) {
           values.unshift(0);
