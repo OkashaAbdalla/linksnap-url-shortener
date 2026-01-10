@@ -240,27 +240,52 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
 }
 
 function DropdownMenu({ darkMode, onDelete, onEdit }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="relative group">
-      <button className={`transition-colors ${darkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`transition-colors ${darkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
+      >
         <span className="material-symbols-outlined">more_horiz</span>
       </button>
-      <div className={`absolute right-0 top-8 w-32 rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 ${
-        darkMode ? 'bg-[#252f3f] border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <button onClick={onEdit} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
-          darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-        }`}>
-          <span className="material-symbols-outlined text-[16px]">edit</span>
-          Edit
-        </button>
-        <button onClick={onDelete} className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 rounded-lg transition-colors ${
-          darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
-        }`}>
-          <span className="material-symbols-outlined text-[16px]">delete</span>
-          Delete
-        </button>
-      </div>
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className={`absolute right-0 top-8 w-32 rounded-lg shadow-lg border z-20 ${
+            darkMode ? 'bg-[#252f3f] border-gray-700' : 'bg-white border-gray-200'
+          }`}>
+            <button 
+              onClick={() => {
+                onEdit();
+                setIsOpen(false);
+              }} 
+              className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
+                darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">edit</span>
+              Edit
+            </button>
+            <button 
+              onClick={() => {
+                onDelete();
+                setIsOpen(false);
+              }} 
+              className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 rounded-lg transition-colors ${
+                darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">delete</span>
+              Delete
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
