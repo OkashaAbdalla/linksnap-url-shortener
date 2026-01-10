@@ -204,12 +204,14 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
         </p>
       </div>
 
-      <MiniActivityChart 
-        data={activityBars.map(value => ({ value }))} 
-        color={getColorFromBarColor(link.barColor)} 
-        clicks={link.clicks} 
-        darkMode={darkMode} 
-      />
+      <div className="pointer-events-none">
+        <MiniActivityChart 
+          data={activityBars.map(value => ({ value }))} 
+          color={getColorFromBarColor(link.barColor)} 
+          clicks={link.clicks} 
+          darkMode={darkMode} 
+        />
+      </div>
       <ActionButtons 
         copied={copied} 
         onCopy={handleCopy} 
