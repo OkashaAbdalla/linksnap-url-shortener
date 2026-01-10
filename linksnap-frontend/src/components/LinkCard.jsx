@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { SHORT_URL_BASE, api } from "../services/api";
 import PasswordPromptModal from "./PasswordPromptModal";
+import MiniActivityChart from "./MiniActivityChart";
 
 function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
   const [copied, setCopied] = useState(false);
@@ -203,7 +204,12 @@ function LinkCard({ link, onCopy, onDelete, onShowQR, onEdit }) {
         </p>
       </div>
 
-      <ActivityChart bars={activityBars} barColor={link.barColor} clicks={link.clicks} darkMode={darkMode} />
+      <MiniActivityChart 
+        data={activityBars.map(value => ({ value }))} 
+        color={getColorFromBarColor(link.barColor)} 
+        clicks={link.clicks} 
+        darkMode={darkMode} 
+      />
       <ActionButtons 
         copied={copied} 
         onCopy={handleCopy} 
@@ -257,15 +263,20 @@ function DropdownMenu({ darkMode, onDelete, onEdit }) {
   );
 }
 
-function ActivityChart({ bars, barColor, clicks, darkMode }) {
-  return (
-    <div className="flex items-end gap-1 h-8 mb-3">
-      {bars.map((height, i) => (
-        <div key={i} className={`flex-1 rounded-sm ${barColor}`} style={{ height: `${Math.max(15, height)}%` }} />
-      ))}
-      <span className={`text-xs ml-2 whitespace-nowrap ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>{clicks} clicks</span>
-    </div>
-  );
+// Helper function to extract color from Tailwind class
+function getColorFromBarColor(barColorClass) {
+  const colorMap = {
+    'bg-cyan-500': '#06B6D4',
+    'bg-blue-500': '#3B82F6',
+    'bg-purple-500': '#8B5CF6',
+    'bg-pink-500': '#EC4899',
+    'bg-orange-500': '#F97316',
+    'bg-green-500': '#10B981',
+    'bg-yellow-500': '#EAB308',
+    'bg-red-500': '#EF4444'
+  };
+  
+  return colorMap[barColorClass] || '#06B6D4';
 }
 
 function ActionButtons({ copied, onCopy, onShowQR, onDownload, downloadable, checkingDownload, downloading, downloadSuccess, darkMode }) {
