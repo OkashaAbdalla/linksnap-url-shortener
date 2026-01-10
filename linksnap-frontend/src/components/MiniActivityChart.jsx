@@ -5,7 +5,7 @@ function MiniActivityChart({ data = [], color = '#06B6D4', clicks = 0, darkMode 
   const chartData = data.length > 0 ? data : generateSampleData();
 
   return (
-    <div className="flex items-end gap-2 h-8 mb-3">
+    <div className="flex items-end gap-2 h-full">
       <div className="flex-1 h-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
