@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <circle cx="16" cy="16" r="16" fill="url(#gradient)"/>
+  
+  <!-- Link icon -->
+  <path d="M13 11C13 9.89543 13.8954 9 15 9H19C20.1046 9 21 9.89543 21 11V13C21 14.1046 20.1046 15 19 15H17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M19 21C19 22.1046 18.1046 23 17 23H13C11.8954 23 11 22.1046 11 21V19C11 17.8954 11.8954 17 13 17H15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 16H19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Lightning bolt accent -->
+  <path d="M22 8L20 12H23L21 16" stroke="#FCD34D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+</svg>
