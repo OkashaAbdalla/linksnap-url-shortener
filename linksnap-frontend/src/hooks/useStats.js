@@ -7,6 +7,13 @@ export function useStats() {
 
   useEffect(() => {
     loadStats();
+    
+    // Auto-refresh stats every 10 seconds
+    const interval = setInterval(() => {
+      loadStats();
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadStats = async () => {

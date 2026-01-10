@@ -9,6 +9,13 @@ export function useLinks() {
 
   useEffect(() => {
     loadLinks();
+    
+    // Auto-refresh links every 10 seconds to show updated click counts
+    const interval = setInterval(() => {
+      loadLinks();
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadLinks = async () => {
