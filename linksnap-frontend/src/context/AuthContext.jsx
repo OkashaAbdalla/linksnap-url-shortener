@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { api, getToken, setToken, removeToken } from "../services/api";
 
+// Authentication context for user state management
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
