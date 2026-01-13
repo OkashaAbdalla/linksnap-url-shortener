@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 
+// Navigation context for managing app navigation state
 const NavigationContext = createContext();
 
 export function NavigationProvider({ children }) {
